@@ -21,6 +21,9 @@ import {
   processResponse,
   validateChatSettings
 } from "../chat-helpers"
+import { getFileWorkspacesByWorkspaceId } from "@/db/files"
+
+type RetrievedFileItem = Tables<"file_items"> & { similarity: number }
 
 export const useChatHandler = () => {
   const router = useRouter()
@@ -157,22 +160,21 @@ export const useChatHandler = () => {
           | "local"
       })
     } else if (selectedWorkspace) {
-      // setChatSettings({
-      //   model: (selectedWorkspace.default_model ||
-      //     "gpt-4-1106-preview") as LLMID,
-      //   prompt:
-      //     selectedWorkspace.default_prompt ||
-      //     "You are a friendly, helpful AI assistant.",
-      //   temperature: selectedWorkspace.default_temperature || 0.5,
-      //   contextLength: selectedWorkspace.default_context_length || 4096,
-      //   includeProfileContext:
-      //     selectedWorkspace.include_profile_context || true,
-      //   includeWorkspaceInstructions:
-      //     selectedWorkspace.include_workspace_instructions || true,
-      //   embeddingsProvider:
-      //     (selectedWorkspace.embeddings_provider as "openai" | "local") ||
-      //     "openai"
-      // })
+      const workspaceWithFiles = await getFileWorkspacesByWorkspaceId(
+        selectedWorkspace.id
+      )
+      console.log("📚 Available workspace files:", workspaceWithFiles.files)
+
+      if ((workspaceWithFiles?.files ?? []).length > 0) {
+        setChatFiles(
+          workspaceWithFiles.files.map((file: Tables<"files">) => ({
+            id: file.id,
+            name: file.name,
+            type: file.type,
+            file: null
+          }))
+        )
+      }
     }
 
     return router.push(`/${selectedWorkspace.id}/chat`)
@@ -231,21 +233,72 @@ export const useChatHandler = () => {
 
       const b64Images = newMessageImages.map(image => image.base64)
 
-      let retrievedFileItems: Tables<"file_items">[] = []
+      let retrievedFileItems: RetrievedFileItem[] = []
 
+      // First check if workspace has any files using existing DB function
+      const workspaceWithFiles =
+        selectedWorkspace &&
+        (await getFileWorkspacesByWorkspaceId(selectedWorkspace.id))
+      const hasWorkspaceFiles = (workspaceWithFiles?.files ?? []).length > 0
+
+      console.log("🔍 RAG Debug:", {
+        hasNewFiles: newMessageFiles.length > 0,
+        newFileCount: newMessageFiles.length,
+        hasChatFiles: chatFiles.length > 0,
+        chatFileCount: chatFiles.length,
+        hasWorkspaceFiles,
+        useRetrievalEnabled: useRetrieval
+      })
+
+      // Modify condition to include workspace files existence
       if (
-        (newMessageFiles.length > 0 || chatFiles.length > 0) &&
+        (newMessageFiles.length > 0 ||
+          chatFiles.length > 0 ||
+          hasWorkspaceFiles) &&
         useRetrieval
       ) {
+        console.log("✅ RAG is active")
         setToolInUse("retrieval")
 
-        retrievedFileItems = await handleRetrieval(
+        // Add debug logging for files being passed
+        console.log("🗂️ Files being searched:", {
+          newMessageFiles: newMessageFiles.map(f => f.name),
+          chatFiles: chatFiles.map(f => f.name),
+          workspaceFiles: workspaceWithFiles?.files?.map(f => f.name)
+        })
+
+        // Combine workspace files with chat files if they exist
+        const allChatFiles = [
+          ...chatFiles,
+          ...(workspaceWithFiles?.files?.map(f => ({
+            id: f.id,
+            name: f.name,
+            type: f.type,
+            file: null
+          })) ?? [])
+        ]
+
+        retrievedFileItems = (await handleRetrieval(
           userInput,
           newMessageFiles,
-          chatFiles,
+          allChatFiles, // Use combined files
           chatSettings!.embeddingsProvider,
           sourceCount
+        )) as RetrievedFileItem[]
+
+        console.log(
+          "📄 Retrieved chunks:",
+          retrievedFileItems.map(item => ({
+            content: item.content.substring(0, 100) + "...",
+            similarity: item.similarity
+          }))
         )
+      } else {
+        console.log("❌ RAG not used because:", {
+          reason: !useRetrieval
+            ? "useRetrieval is disabled"
+            : "no files available (both newMessageFiles and chatFiles are empty)"
+        })
       }
 
       const { tempUserChatMessage, tempAssistantChatMessage } =
@@ -260,7 +313,16 @@ export const useChatHandler = () => {
         )
 
       let payload: ChatPayload = {
-        chatSettings: chatSettings!,
+        chatSettings: {
+          ...chatSettings!,
+          prompt: `${chatSettings!.prompt}
+          
+When answering, please:
+1. First check the provided research documents (if any)
+2. If you find relevant information in the documents, use it and cite which chunk it came from
+3. If you don't find relevant information in the documents, explicitly state "I didn't find this information in the provided documents" before giving your answer from general knowledge
+4. Always be clear about whether you're using document information or general knowledge`
+        },
         workspaceInstructions: selectedWorkspace!.instructions || "",
         chatMessages: isRegeneration
           ? [...chatMessages]
@@ -366,7 +428,7 @@ export const useChatHandler = () => {
 
       await handleCreateMessages(
         chatMessages,
-        currentChat,
+        currentChat!,
         profile!,
         modelData!,
         messageContent,

@@ -11,8 +11,12 @@ export const getFileById = async (fileId: string) => {
     .eq("id", fileId)
     .single()
 
-  if (!file) {
+  if (error) {
     throw new Error(error.message)
+  }
+
+  if (!file) {
+    throw new Error("File not found")
   }
 
   return file
@@ -94,7 +98,10 @@ export const createFile = async (
   let validFilename = fileRecord.name.replace(/[^a-z0-9.]/gi, "_").toLowerCase()
   const extension = file.name.split(".").pop()
   const extensionIndex = validFilename.lastIndexOf(".")
-  const baseName = validFilename.substring(0, (extensionIndex < 0) ? undefined : extensionIndex)
+  const baseName = validFilename.substring(
+    0,
+    extensionIndex < 0 ? undefined : extensionIndex
+  )
   const maxBaseNameLength = 100 - (extension?.length || 0) - 1
   if (baseName.length > maxBaseNameLength) {
     fileRecord.name = baseName.substring(0, maxBaseNameLength) + "." + extension

@@ -58,25 +58,34 @@ export const handleRetrieval = async (
   embeddingsProvider: "openai" | "local",
   sourceCount: number
 ) => {
-  const response = await fetch("/api/retrieval/retrieve", {
-    method: "POST",
-    body: JSON.stringify({
-      userInput,
-      fileIds: [...newMessageFiles, ...chatFiles].map(file => file.id),
-      embeddingsProvider,
-      sourceCount
+  try {
+    const response = await fetch("/api/retrieval/retrieve", {
+      method: "POST",
+      body: JSON.stringify({
+        userInput,
+        fileIds: [...newMessageFiles, ...chatFiles].map(file => file.id),
+        embeddingsProvider,
+        sourceCount
+      })
     })
-  })
 
-  if (!response.ok) {
-    console.error("Error retrieving:", response)
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      const errorMessage =
+        errorData.message || `Error: ${response.status} ${response.statusText}`
+      console.error("Retrieval error:", errorMessage)
+      throw new Error(errorMessage)
+    }
+
+    const { results } = (await response.json()) as {
+      results: Tables<"file_items">[]
+    }
+
+    return results
+  } catch (error) {
+    console.error("Failed to retrieve data:", error)
+    throw error
   }
-
-  const { results } = (await response.json()) as {
-    results: Tables<"file_items">[]
-  }
-
-  return results
 }
 
 export const createTempMessages = (
@@ -208,9 +217,12 @@ export const handleHostedChat = async (
 
   let draftMessages = await buildFinalMessages(payload, profile, chatImages)
 
-  let formattedMessages : any[] = []
+  let formattedMessages: any[] = []
   if (provider === "google") {
-    formattedMessages = await adaptMessagesForGoogleGemini(payload, draftMessages)
+    formattedMessages = await adaptMessagesForGoogleGemini(
+      payload,
+      draftMessages
+    )
   } else {
     formattedMessages = draftMessages
   }

@@ -7,31 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string
-          query?: string
-          variables?: Json
-          extensions?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       assistant_collections: {
@@ -69,13 +44,6 @@ export type Database = {
             columns: ["collection_id"]
             isOneToOne: false
             referencedRelation: "collections"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "assistant_collections_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -117,13 +85,6 @@ export type Database = {
             referencedRelation: "files"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "assistant_files_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       assistant_tools: {
@@ -163,13 +124,6 @@ export type Database = {
             referencedRelation: "tools"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "assistant_tools_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       assistant_workspaces: {
@@ -200,13 +154,6 @@ export type Database = {
             columns: ["assistant_id"]
             isOneToOne: false
             referencedRelation: "assistants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "assistant_workspaces_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -281,13 +228,6 @@ export type Database = {
             referencedRelation: "folders"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "assistants_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       chat_files: {
@@ -325,13 +265,6 @@ export type Database = {
             columns: ["file_id"]
             isOneToOne: false
             referencedRelation: "files"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chat_files_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -407,13 +340,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "chats_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "chats_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
@@ -459,13 +385,6 @@ export type Database = {
             referencedRelation: "files"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "collection_files_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       collection_workspaces: {
@@ -496,13 +415,6 @@ export type Database = {
             columns: ["collection_id"]
             isOneToOne: false
             referencedRelation: "collections"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "collection_workspaces_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -553,13 +465,6 @@ export type Database = {
             referencedRelation: "folders"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "collections_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       file_items: {
@@ -607,13 +512,6 @@ export type Database = {
             referencedRelation: "files"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "file_items_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       file_workspaces: {
@@ -644,13 +542,6 @@ export type Database = {
             columns: ["file_id"]
             isOneToOne: false
             referencedRelation: "files"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "file_workspaces_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -713,13 +604,6 @@ export type Database = {
             referencedRelation: "folders"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "files_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       folders: {
@@ -754,13 +638,6 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "folders_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "folders_workspace_id_fkey"
             columns: ["workspace_id"]
@@ -805,13 +682,6 @@ export type Database = {
             columns: ["message_id"]
             isOneToOne: false
             referencedRelation: "messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "message_file_items_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -871,13 +741,6 @@ export type Database = {
             referencedRelation: "chats"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "messages_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       model_workspaces: {
@@ -908,13 +771,6 @@ export type Database = {
             columns: ["model_id"]
             isOneToOne: false
             referencedRelation: "models"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "model_workspaces_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -977,13 +833,6 @@ export type Database = {
             referencedRelation: "folders"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "models_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       preset_workspaces: {
@@ -1014,13 +863,6 @@ export type Database = {
             columns: ["preset_id"]
             isOneToOne: false
             referencedRelation: "presets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "preset_workspaces_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -1090,13 +932,6 @@ export type Database = {
             columns: ["folder_id"]
             isOneToOne: false
             referencedRelation: "folders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "presets_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1186,15 +1021,7 @@ export type Database = {
           user_id?: string
           username?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       prompt_workspaces: {
         Row: {
@@ -1224,13 +1051,6 @@ export type Database = {
             columns: ["prompt_id"]
             isOneToOne: false
             referencedRelation: "prompts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "prompt_workspaces_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -1281,13 +1101,6 @@ export type Database = {
             referencedRelation: "folders"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "prompts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       tool_workspaces: {
@@ -1318,13 +1131,6 @@ export type Database = {
             columns: ["tool_id"]
             isOneToOne: false
             referencedRelation: "tools"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tool_workspaces_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
@@ -1382,13 +1188,6 @@ export type Database = {
             columns: ["folder_id"]
             isOneToOne: false
             referencedRelation: "folders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tools_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1451,15 +1250,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "workspaces_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
@@ -1467,11 +1258,7 @@ export type Database = {
     }
     Functions: {
       create_duplicate_messages_for_new_chat: {
-        Args: {
-          old_chat_id: string
-          new_chat_id: string
-          new_user_id: string
-        }
+        Args: { old_chat_id: string; new_chat_id: string; new_user_id: string }
         Returns: undefined
       }
       delete_message_including_and_after: {
@@ -1491,17 +1278,11 @@ export type Database = {
         Returns: undefined
       }
       delete_storage_object: {
-        Args: {
-          bucket: string
-          object: string
-        }
+        Args: { bucket: string; object: string }
         Returns: Record<string, unknown>
       }
       delete_storage_object_from_bucket: {
-        Args: {
-          bucket_name: string
-          object_path: string
-        }
+        Args: { bucket_name: string; object_path: string }
         Returns: Record<string, unknown>
       }
       match_file_items_local: {
@@ -1533,201 +1314,16 @@ export type Database = {
         }[]
       }
       non_private_assistant_exists: {
-        Args: {
-          p_name: string
-        }
+        Args: { p_name: string }
         Returns: boolean
       }
       non_private_file_exists: {
-        Args: {
-          p_name: string
-        }
+        Args: { p_name: string }
         Returns: boolean
       }
       non_private_workspace_exists: {
-        Args: {
-          p_name: string
-        }
+        Args: { p_name: string }
         Returns: boolean
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-  storage: {
-    Tables: {
-      buckets: {
-        Row: {
-          allowed_mime_types: string[] | null
-          avif_autodetection: boolean | null
-          created_at: string | null
-          file_size_limit: number | null
-          id: string
-          name: string
-          owner: string | null
-          owner_id: string | null
-          public: boolean | null
-          updated_at: string | null
-        }
-        Insert: {
-          allowed_mime_types?: string[] | null
-          avif_autodetection?: boolean | null
-          created_at?: string | null
-          file_size_limit?: number | null
-          id: string
-          name: string
-          owner?: string | null
-          owner_id?: string | null
-          public?: boolean | null
-          updated_at?: string | null
-        }
-        Update: {
-          allowed_mime_types?: string[] | null
-          avif_autodetection?: boolean | null
-          created_at?: string | null
-          file_size_limit?: number | null
-          id?: string
-          name?: string
-          owner?: string | null
-          owner_id?: string | null
-          public?: boolean | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      migrations: {
-        Row: {
-          executed_at: string | null
-          hash: string
-          id: number
-          name: string
-        }
-        Insert: {
-          executed_at?: string | null
-          hash: string
-          id: number
-          name: string
-        }
-        Update: {
-          executed_at?: string | null
-          hash?: string
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
-      objects: {
-        Row: {
-          bucket_id: string | null
-          created_at: string | null
-          id: string
-          last_accessed_at: string | null
-          metadata: Json | null
-          name: string | null
-          owner: string | null
-          owner_id: string | null
-          path_tokens: string[] | null
-          updated_at: string | null
-          version: string | null
-        }
-        Insert: {
-          bucket_id?: string | null
-          created_at?: string | null
-          id?: string
-          last_accessed_at?: string | null
-          metadata?: Json | null
-          name?: string | null
-          owner?: string | null
-          owner_id?: string | null
-          path_tokens?: string[] | null
-          updated_at?: string | null
-          version?: string | null
-        }
-        Update: {
-          bucket_id?: string | null
-          created_at?: string | null
-          id?: string
-          last_accessed_at?: string | null
-          metadata?: Json | null
-          name?: string | null
-          owner?: string | null
-          owner_id?: string | null
-          path_tokens?: string[] | null
-          updated_at?: string | null
-          version?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "objects_bucketId_fkey"
-            columns: ["bucket_id"]
-            isOneToOne: false
-            referencedRelation: "buckets"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      can_insert_object: {
-        Args: {
-          bucketid: string
-          name: string
-          owner: string
-          metadata: Json
-        }
-        Returns: undefined
-      }
-      extension: {
-        Args: {
-          name: string
-        }
-        Returns: string
-      }
-      filename: {
-        Args: {
-          name: string
-        }
-        Returns: string
-      }
-      foldername: {
-        Args: {
-          name: string
-        }
-        Returns: string[]
-      }
-      get_size_by_bucket: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          size: number
-          bucket_id: string
-        }[]
-      }
-      search: {
-        Args: {
-          prefix: string
-          bucketname: string
-          limits?: number
-          levels?: number
-          offsets?: number
-          search?: string
-          sortcolumn?: string
-          sortorder?: string
-        }
-        Returns: {
-          name: string
-          id: string
-          updated_at: string
-          created_at: string
-          last_accessed_at: string
-          metadata: Json
-        }[]
       }
     }
     Enums: {
@@ -1739,27 +1335,29 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+type DefaultSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -1767,20 +1365,22 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -1788,20 +1388,22 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -1809,15 +1411,37 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
     | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {},
+  },
+} as const
