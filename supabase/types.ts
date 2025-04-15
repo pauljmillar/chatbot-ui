@@ -9,6 +9,108 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      account_members: {
+        Row: {
+          account_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_members_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      account_workspaces: {
+        Row: {
+          account_id: string
+          created_at: string
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          workspace_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          workspace_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_workspaces_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_workspaces_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounts: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       assistant_collections: {
         Row: {
           assistant_id: string
@@ -948,6 +1050,7 @@ export type Database = {
           bio: string
           created_at: string
           display_name: string
+          full_name: string | null
           google_gemini_api_key: string | null
           groq_api_key: string | null
           has_onboarded: boolean
@@ -960,6 +1063,7 @@ export type Database = {
           openrouter_api_key: string | null
           perplexity_api_key: string | null
           profile_context: string
+          system_role: string | null
           updated_at: string | null
           use_azure_openai: boolean
           user_id: string
@@ -976,6 +1080,7 @@ export type Database = {
           bio: string
           created_at?: string
           display_name: string
+          full_name?: string | null
           google_gemini_api_key?: string | null
           groq_api_key?: string | null
           has_onboarded?: boolean
@@ -988,6 +1093,7 @@ export type Database = {
           openrouter_api_key?: string | null
           perplexity_api_key?: string | null
           profile_context: string
+          system_role?: string | null
           updated_at?: string | null
           use_azure_openai: boolean
           user_id: string
@@ -1004,6 +1110,7 @@ export type Database = {
           bio?: string
           created_at?: string
           display_name?: string
+          full_name?: string | null
           google_gemini_api_key?: string | null
           groq_api_key?: string | null
           has_onboarded?: boolean
@@ -1016,6 +1123,7 @@ export type Database = {
           openrouter_api_key?: string | null
           perplexity_api_key?: string | null
           profile_context?: string
+          system_role?: string | null
           updated_at?: string | null
           use_azure_openai?: boolean
           user_id?: string
@@ -1188,6 +1296,54 @@ export type Database = {
             columns: ["folder_id"]
             isOneToOne: false
             referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_access_requests: {
+        Row: {
+          account_id: string
+          created_at: string
+          id: string
+          requested_by: string
+          reviewed_by: string | null
+          status: string
+          updated_at: string | null
+          workspace_id: string
+        }
+        Insert: {
+          account_id: string
+          created_at?: string
+          id?: string
+          requested_by: string
+          reviewed_by?: string | null
+          status: string
+          updated_at?: string | null
+          workspace_id: string
+        }
+        Update: {
+          account_id?: string
+          created_at?: string
+          id?: string
+          requested_by?: string
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_access_requests_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_access_requests_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]
