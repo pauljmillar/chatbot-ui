@@ -22,6 +22,26 @@ export async function getServerProfile() {
     throw new Error("User not found")
   }
 
+  // First get account IDs
+  const { data: memberships } = await supabase
+    .from("account_members")
+    .select("account_id")
+    .eq("user_id", user.id)
+
+  const accountIds = memberships?.map(m => m.account_id) || []
+
+  // Then get account keys
+  const { data: accountKeys } = await supabase
+    .from("account_api_keys")
+    .select("*")
+    .in("account_id", accountIds)
+    .single()
+
+  if (!accountKeys) {
+    throw new Error("No API keys found for this account")
+  }
+
+  // Get profile for user-specific settings
   const { data: profile } = await supabase
     .from("profiles")
     .select("*")
@@ -32,9 +52,13 @@ export async function getServerProfile() {
     throw new Error("Profile not found")
   }
 
-  const profileWithKeys = addApiKeysToProfile(profile)
+  // Combine profile with account keys
+  const profileWithKeys = {
+    ...profile,
+    ...accountKeys
+  }
 
-  return profileWithKeys
+  return addApiKeysToProfile(profileWithKeys)
 }
 
 function addApiKeysToProfile(profile: Tables<"profiles">) {
@@ -67,7 +91,9 @@ function addApiKeysToProfile(profile: Tables<"profiles">) {
 }
 
 export function checkApiKey(apiKey: string | null, keyName: string) {
-  if (apiKey === null || apiKey === "") {
-    throw new Error(`${keyName} API Key not found`)
+  if (!apiKey || apiKey === "") {
+    throw new Error(
+      `${keyName} API Key not found in account settings. Please ask your account administrator to set up the API key.`
+    )
   }
 }

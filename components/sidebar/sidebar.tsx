@@ -26,7 +26,11 @@ export const Sidebar: FC<SidebarProps> = ({ contentType, showSidebar }) => {
     models
   } = useContext(ChatbotUIContext)
 
+  console.log("All folders in Sidebar:", folders)
+
   const chatFolders = folders.filter(folder => folder.type === "chats")
+  console.log("Chat folders filtered:", chatFolders)
+
   const presetFolders = folders.filter(folder => folder.type === "presets")
   const promptFolders = folders.filter(folder => folder.type === "prompts")
   const filesFolders = folders.filter(folder => folder.type === "files")

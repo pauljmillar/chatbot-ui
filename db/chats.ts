@@ -12,17 +12,28 @@ export const getChatById = async (chatId: string) => {
 }
 
 export const getChatsByWorkspaceId = async (workspaceId: string) => {
+  // First verify auth
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("User not authenticated")
+
+  console.log("Fetching chats for workspace:", workspaceId)
+
   const { data: chats, error } = await supabase
     .from("chats")
     .select("*")
     .eq("workspace_id", workspaceId)
     .order("created_at", { ascending: false })
 
-  if (!chats) {
+  console.log("Chats query result:", { chats, error })
+
+  if (error) {
+    console.error("Error fetching chats:", error)
     throw new Error(error.message)
   }
 
-  return chats
+  return chats || []
 }
 
 export const createChat = async (chat: TablesInsert<"chats">) => {

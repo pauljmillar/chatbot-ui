@@ -12,7 +12,10 @@ import { getPresetWorkspacesByWorkspaceId } from "@/db/presets"
 import { getPromptWorkspacesByWorkspaceId } from "@/db/prompts"
 import { getAssistantImageFromStorage } from "@/db/storage/assistant-images"
 import { getToolWorkspacesByWorkspaceId } from "@/db/tools"
-import { getWorkspaceById } from "@/db/workspaces"
+import {
+  getWorkspaceById,
+  getWorkspacesByAccountMembership
+} from "@/db/workspaces"
 import { convertBlobToBase64 } from "@/lib/blob-to-b64"
 import { supabase } from "@/lib/supabase/browser-client"
 import { LLMID } from "@/types"
@@ -91,7 +94,30 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const fetchWorkspaceData = async (workspaceId: string) => {
     setLoading(true)
 
-    const workspace = await getWorkspaceById(workspaceId)
+    const {
+      data: { user }
+    } = await supabase.auth.getUser()
+    if (!user) {
+      router.push("/login")
+      return
+    }
+
+    console.log("Fetching workspaces for user:", user.id)
+    const workspaces = await getWorkspacesByAccountMembership(user.id)
+    console.log("Available workspaces:", workspaces)
+
+    console.log("Looking for workspace:", params.workspaceid)
+    const workspace = workspaces.find(w => w.id === params.workspaceid)
+    console.log("Found workspace:", workspace)
+
+    if (!workspace) {
+      console.error("Workspace access error:", {
+        requestedId: params.workspaceid,
+        availableWorkspaces: workspaces.map(w => ({ id: w.id, name: w.name }))
+      })
+      throw new Error("Workspace not found or access denied")
+    }
+
     setSelectedWorkspace(workspace)
 
     const assistantData = await getAssistantWorkspacesByWorkspaceId(workspaceId)
@@ -138,8 +164,14 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       await getCollectionWorkspacesByWorkspaceId(workspaceId)
     setCollections(collectionData.collections)
 
-    const folders = await getFoldersByWorkspaceId(workspaceId)
-    setFolders(folders)
+    // Get folders after confirming auth
+    try {
+      const folders = await getFoldersByWorkspaceId(workspaceId)
+      console.log("Fetched folders:", folders)
+      setFolders(folders)
+    } catch (error) {
+      console.error("Error fetching folders:", error)
+    }
 
     const fileData = await getFileWorkspacesByWorkspaceId(workspaceId)
     setFiles(fileData.files)

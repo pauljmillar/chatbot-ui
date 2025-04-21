@@ -9,9 +9,20 @@ import { get } from "@vercel/edge-config"
 import { Metadata } from "next"
 import { cookies, headers } from "next/headers"
 import { redirect } from "next/navigation"
+import { getWorkspacesByAccountMembership } from "@/db/workspaces"
 
 export const metadata: Metadata = {
   title: "Login"
+}
+
+interface Workspace {
+  id: string
+  is_home: boolean
+  name: string // Add other required fields
+}
+
+interface WorkspaceResponse {
+  workspace: Workspace
 }
 
 export default async function Login({
@@ -34,18 +45,56 @@ export default async function Login({
   const session = (await supabase.auth.getSession()).data.session
 
   if (session) {
-    const { data: homeWorkspace, error } = await supabase
-      .from("workspaces")
+    console.log("Session user ID:", session.user.id)
+
+    const cookieStore = cookies()
+    const supabase = createClient(cookieStore)
+
+    // Debug account membership
+    const { data: membershipCheck } = await supabase
+      .from("account_members")
       .select("*")
       .eq("user_id", session.user.id)
-      .eq("is_home", true)
-      .single()
 
-    if (!homeWorkspace) {
-      throw new Error(error.message)
+    console.log("Direct membership check:", membershipCheck)
+
+    // First get account memberships
+    const { data: memberships, error: memberError } = await supabase
+      .from("account_members")
+      .select("account_id")
+      .eq("user_id", session.user.id)
+
+    console.log("Account memberships:", memberships)
+
+    if (memberError || !memberships?.length) {
+      return redirect(`/login?message=No account access found`)
     }
 
-    return redirect(`/${homeWorkspace.id}/chat`)
+    // Then get workspaces for these accounts
+    const { data: workspaces, error: workspaceError } = (await supabase
+      .from("account_workspaces")
+      .select(
+        `
+        workspace:workspaces!inner(*)
+      `
+      )
+      .in(
+        "account_id",
+        memberships.map(m => m.account_id)
+      )) as unknown as {
+      data: WorkspaceResponse[]
+      error: any
+    }
+
+    console.log("Workspaces found:", workspaces)
+
+    if (workspaceError || !workspaces?.length) {
+      return redirect(`/login?message=No accessible workspaces found`)
+    }
+
+    const homeWorkspace =
+      workspaces.find(w => w.workspace.is_home) || workspaces[0]
+    return redirect(`/${homeWorkspace.workspace.id}/chat`)
   }
 
   const signIn = async (formData: FormData) => {
@@ -65,20 +114,43 @@ export default async function Login({
       return redirect(`/login?message=${error.message}`)
     }
 
-    const { data: homeWorkspace, error: homeWorkspaceError } = await supabase
-      .from("workspaces")
-      .select("*")
+    // First get account memberships
+    const { data: memberships, error: memberError } = await supabase
+      .from("account_members")
+      .select("account_id")
       .eq("user_id", data.user.id)
-      .eq("is_home", true)
-      .single()
 
-    if (!homeWorkspace) {
-      throw new Error(
-        homeWorkspaceError?.message || "An unexpected error occurred"
-      )
+    console.log("Account memberships:", memberships)
+
+    if (memberError || !memberships?.length) {
+      return redirect(`/login?message=No account access found`)
     }
 
-    return redirect(`/${homeWorkspace.id}/chat`)
+    // Then get workspaces for these accounts
+    const { data: workspaces, error: workspaceError } = (await supabase
+      .from("account_workspaces")
+      .select(
+        `
+        workspace:workspaces!inner(*)
+      `
+      )
+      .in(
+        "account_id",
+        memberships.map(m => m.account_id)
+      )) as unknown as {
+      data: WorkspaceResponse[]
+      error: any
+    }
+
+    console.log("Workspaces found:", workspaces)
+
+    if (workspaceError || !workspaces?.length) {
+      return redirect(`/login?message=No accessible workspaces found`)
+    }
+
+    const homeWorkspace =
+      workspaces.find(w => w.workspace.is_home) || workspaces[0]
+    return redirect(`/${homeWorkspace.workspace.id}/chat`)
   }
 
   const getEnvVarOrEdgeConfigValue = async (name: string) => {

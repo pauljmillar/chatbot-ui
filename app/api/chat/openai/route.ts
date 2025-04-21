@@ -45,10 +45,10 @@ export async function POST(request: Request) {
 
     if (errorMessage.toLowerCase().includes("api key not found")) {
       errorMessage =
-        "OpenAI API Key not found. Please set it in your profile settings."
+        "OpenAI API Key not found. Please contact your account administrator to set up the API key."
     } else if (errorMessage.toLowerCase().includes("incorrect api key")) {
       errorMessage =
-        "OpenAI API Key is incorrect. Please fix it in your profile settings."
+        "OpenAI API Key is incorrect. Please contact your account administrator to fix the API key."
     }
 
     return new Response(JSON.stringify({ message: errorMessage }), {

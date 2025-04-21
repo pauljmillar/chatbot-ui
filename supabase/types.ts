@@ -9,6 +9,74 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      account_api_keys: {
+        Row: {
+          account_id: string
+          anthropic_api_key: string | null
+          azure_openai_35_turbo_id: string | null
+          azure_openai_45_turbo_id: string | null
+          azure_openai_45_vision_id: string | null
+          azure_openai_api_key: string | null
+          azure_openai_embeddings_id: string | null
+          azure_openai_endpoint: string | null
+          created_at: string
+          google_gemini_api_key: string | null
+          groq_api_key: string | null
+          id: string
+          mistral_api_key: string | null
+          openai_api_key: string | null
+          openai_organization_id: string | null
+          perplexity_api_key: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_id: string
+          anthropic_api_key?: string | null
+          azure_openai_35_turbo_id?: string | null
+          azure_openai_45_turbo_id?: string | null
+          azure_openai_45_vision_id?: string | null
+          azure_openai_api_key?: string | null
+          azure_openai_embeddings_id?: string | null
+          azure_openai_endpoint?: string | null
+          created_at?: string
+          google_gemini_api_key?: string | null
+          groq_api_key?: string | null
+          id?: string
+          mistral_api_key?: string | null
+          openai_api_key?: string | null
+          openai_organization_id?: string | null
+          perplexity_api_key?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_id?: string
+          anthropic_api_key?: string | null
+          azure_openai_35_turbo_id?: string | null
+          azure_openai_45_turbo_id?: string | null
+          azure_openai_45_vision_id?: string | null
+          azure_openai_api_key?: string | null
+          azure_openai_embeddings_id?: string | null
+          azure_openai_endpoint?: string | null
+          created_at?: string
+          google_gemini_api_key?: string | null
+          groq_api_key?: string | null
+          id?: string
+          mistral_api_key?: string | null
+          openai_api_key?: string | null
+          openai_organization_id?: string | null
+          perplexity_api_key?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_api_keys_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       account_members: {
         Row: {
           account_id: string
@@ -1440,6 +1508,10 @@ export type Database = {
       delete_storage_object_from_bucket: {
         Args: { bucket_name: string; object_path: string }
         Returns: Record<string, unknown>
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
       match_file_items_local: {
         Args: {

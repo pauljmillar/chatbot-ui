@@ -3,8 +3,8 @@
 import { ChatbotUIContext } from "@/context/context"
 import { getProfileByUserId, updateProfile } from "@/db/profile"
 import {
-  getHomeWorkspaceByUserId,
-  getWorkspacesByUserId
+  getHomeWorkspaceByAccountMembership,
+  getWorkspacesByAccountMembership
 } from "@/db/workspaces"
 import {
   fetchHostedModels,
@@ -90,7 +90,7 @@ export default function SetupPage() {
             setAvailableOpenRouterModels(openRouterModels)
           }
 
-          const homeWorkspaceId = await getHomeWorkspaceByUserId(
+          const homeWorkspaceId = await getHomeWorkspaceByAccountMembership(
             session.user.id
           )
           return router.push(`/${homeWorkspaceId}/chat`)
@@ -145,7 +145,7 @@ export default function SetupPage() {
     const updatedProfile = await updateProfile(profile.id, updateProfilePayload)
     setProfile(updatedProfile)
 
-    const workspaces = await getWorkspacesByUserId(profile.user_id)
+    const workspaces = await getWorkspacesByAccountMembership(profile.user_id)
     const homeWorkspace = workspaces.find(w => w.is_home)
 
     // There will always be a home workspace

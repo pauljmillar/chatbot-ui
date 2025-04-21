@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AccountCard } from "./account-card"
+import { UsersTable } from "./users-table"
 
 export default function AdminDashboard() {
   const [accounts, setAccounts] = useState<AdminAccountView[]>([])
@@ -140,6 +141,7 @@ export default function AdminDashboard() {
         <TabsList>
           <TabsTrigger value="accounts">Accounts</TabsTrigger>
           <TabsTrigger value="workspaces">Workspaces</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="requests">Access Requests</TabsTrigger>
         </TabsList>
 
@@ -170,6 +172,10 @@ export default function AdminDashboard() {
               </Card>
             ))}
           </div>
+        </TabsContent>
+
+        <TabsContent value="users">
+          <UsersTable />
         </TabsContent>
 
         <TabsContent value="requests">

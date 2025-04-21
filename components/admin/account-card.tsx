@@ -185,7 +185,7 @@ export function AccountCard({
                         .filter(
                           user =>
                             !account.members.some(
-                              member => member.user.id === user.id
+                              member => member.user.user_id === user.user_id
                             )
                         )
                         .map(user => (
@@ -221,8 +221,7 @@ export function AccountCard({
                   className="flex items-center justify-between"
                 >
                   <span>
-                    {member.user.display_name || member.user.username} (
-                    {member.role})
+                    {member.user.display_name} ({member.role})
                   </span>
                   <Button
                     variant="ghost"

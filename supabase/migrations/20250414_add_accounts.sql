@@ -109,6 +109,19 @@ CREATE POLICY "Members can view their account members"
         )
     );
 
+
+-- First, drop all existing profile policies
+DROP POLICY IF EXISTS "System admins can view all profiles" ON profiles;
+DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
+
+-- Create one simple policy
+CREATE POLICY "Basic profile access"
+    ON profiles FOR SELECT
+    USING (
+        auth.uid() = user_id OR
+        (SELECT system_role FROM profiles WHERE user_id = auth.uid()) = 'admin'
+    );
+
 -- Account workspace access policies
 CREATE POLICY "Users can view workspaces in their accounts"
     ON account_workspaces FOR SELECT

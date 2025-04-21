@@ -5,6 +5,12 @@ import { toast } from "sonner"
 import { uploadFile } from "./storage/files"
 
 export const getFileById = async (fileId: string) => {
+  // First verify auth
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("User not authenticated")
+
   const { data: file, error } = await supabase
     .from("files")
     .select("*")
@@ -12,6 +18,7 @@ export const getFileById = async (fileId: string) => {
     .single()
 
   if (error) {
+    console.error("Error fetching file:", error)
     throw new Error(error.message)
   }
 
@@ -23,19 +30,30 @@ export const getFileById = async (fileId: string) => {
 }
 
 export const getFileWorkspacesByWorkspaceId = async (workspaceId: string) => {
+  // First verify auth
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("User not authenticated")
+
+  console.log("Fetching files for workspace:", workspaceId)
+
   const { data: workspace, error } = await supabase
     .from("workspaces")
     .select(
       `
       id,
       name,
-      files (*)
+      files!file_workspaces(*)
     `
     )
     .eq("id", workspaceId)
     .single()
 
-  if (!workspace) {
+  console.log("Files query result:", { workspace, error })
+
+  if (error) {
+    console.error("Error fetching workspace files:", error)
     throw new Error(error.message)
   }
 

@@ -162,7 +162,7 @@ interface UserProfile {
   username: string
 }
 
-export const listAllUsers = async (): Promise<UserProfile[]> => {
+export const listAllUsers = async () => {
   const { data: users, error } = await supabase
     .from("profiles")
     .select("id, user_id, display_name, username")

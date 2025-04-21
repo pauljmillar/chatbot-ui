@@ -20,7 +20,6 @@ CREATE TABLE IF NOT EXISTS profiles (
     image_path TEXT NOT NULL CHECK (char_length(image_path) <= 1000), -- file path in profile_images bucket
     profile_context TEXT NOT NULL CHECK (char_length(profile_context) <= 1500),
     display_name TEXT NOT NULL CHECK (char_length(display_name) <= 100),
-    email TEXT,
     use_azure_openai BOOLEAN NOT NULL,
     username TEXT NOT NULL UNIQUE CHECK (char_length(username) >= 3 AND char_length(username) <= 25),
 
@@ -170,10 +169,3 @@ CREATE POLICY "Allow authenticated update access to own profile images"
 CREATE POLICY "Allow authenticated delete access to own profile images"
     ON storage.objects FOR DELETE TO authenticated
     USING (bucket_id = 'profile_images' AND (storage.foldername(name))[1] = auth.uid()::text);
-
--- Backfill email
-UPDATE profiles
-SET email = auth.users.email
-FROM auth.users
-WHERE profiles.user_id = auth.users.id
-AND profiles.email IS NULL;
