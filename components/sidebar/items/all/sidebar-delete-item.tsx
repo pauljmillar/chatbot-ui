@@ -16,11 +16,12 @@ import { deleteFile } from "@/db/files"
 import { deleteModel } from "@/db/models"
 import { deletePreset } from "@/db/presets"
 import { deletePrompt } from "@/db/prompts"
-import { deleteFileFromStorage } from "@/db/storage/files"
+import { deleteStorageFile } from "@/db/storage/files"
 import { deleteTool } from "@/db/tools"
 import { Tables } from "@/supabase/types"
 import { ContentType, DataItemType } from "@/types"
 import { FC, useContext, useRef, useState } from "react"
+import { toast } from "sonner"
 
 interface SidebarDeleteItemProps {
   item: DataItemType
@@ -45,6 +46,7 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   const [showDialog, setShowDialog] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const deleteFunctions = {
     chats: async (chat: Tables<"chats">) => {
@@ -57,7 +59,7 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
       await deletePrompt(prompt.id)
     },
     files: async (file: Tables<"files">) => {
-      await deleteFileFromStorage(file.file_path)
+      await deleteStorageFile(file.file_path)
       await deleteFile(file.id)
     },
     collections: async (collection: Tables<"collections">) => {
@@ -89,18 +91,25 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
   }
 
   const handleDelete = async () => {
-    const deleteFunction = deleteFunctions[contentType]
-    const setStateFunction = stateUpdateFunctions[contentType]
+    try {
+      setDeleting(true)
+      const deleteFunction = deleteFunctions[contentType]
+      const setStateFunction = stateUpdateFunctions[contentType]
 
-    if (!deleteFunction || !setStateFunction) return
+      if (!deleteFunction || !setStateFunction) return
 
-    await deleteFunction(item as any)
+      await deleteFunction(item as any)
 
-    setStateFunction((prevItems: any) =>
-      prevItems.filter((prevItem: any) => prevItem.id !== item.id)
-    )
+      setStateFunction((prevItems: any) =>
+        prevItems.filter((prevItem: any) => prevItem.id !== item.id)
+      )
 
-    setShowDialog(false)
+      setShowDialog(false)
+    } catch (error) {
+      toast.error(`Error deleting ${contentType.slice(0, -1)}. ${error}.`)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -128,12 +137,21 @@ export const SidebarDeleteItem: FC<SidebarDeleteItemProps> = ({
         </DialogHeader>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => setShowDialog(false)}>
+          <Button
+            variant="ghost"
+            onClick={() => setShowDialog(false)}
+            disabled={deleting}
+          >
             Cancel
           </Button>
 
-          <Button ref={buttonRef} variant="destructive" onClick={handleDelete}>
-            Delete
+          <Button
+            ref={buttonRef}
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            {deleting ? "Deleting..." : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>

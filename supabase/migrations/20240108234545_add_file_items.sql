@@ -86,7 +86,7 @@ begin
 end;
 $$;
 
-create function match_file_items_openai (
+create or replace function match_file_items_openai (
   query_embedding vector(1536),
   match_count int DEFAULT null,
   file_ids UUID[] DEFAULT null
@@ -98,6 +98,7 @@ create function match_file_items_openai (
   similarity float
 )
 language plpgsql
+security definer
 as $$
 #variable_conflict use_column
 begin
@@ -109,7 +110,12 @@ begin
     tokens,
     1 - (file_items.openai_embedding <=> query_embedding) as similarity
   from file_items
-  where (file_id = ANY(file_ids))
+  where file_id = ANY(file_ids)
+  and file_id in (
+    select file_id 
+    from file_workspaces 
+    where workspace_id in (select get_workspaces_for_user(auth.uid()))
+  )
   order by file_items.openai_embedding <=> query_embedding
   limit match_count;
 end;

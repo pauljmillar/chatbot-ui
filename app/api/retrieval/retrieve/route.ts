@@ -48,6 +48,19 @@ export async function POST(request: Request) {
       })
     }
 
+    const { data: fileItemsDetail, error: detailError } = await supabaseAdmin
+      .from("file_items")
+      .select("id, file_id, content")
+      .in("file_id", uniqueFileIds)
+      .limit(3)
+
+    console.log("Content check:", {
+      samples: fileItemsDetail?.map(item => ({
+        fileId: item.file_id,
+        contentPreview: item.content.substring(0, 100)
+      }))
+    })
+
     if (embeddingsProvider === "openai") {
       const response = await openai.embeddings.create({
         model: "text-embedding-3-small",
@@ -56,18 +69,66 @@ export async function POST(request: Request) {
 
       const openaiEmbedding = response.data.map(item => item.embedding)[0]
 
-      const { data: openaiFileItems, error: openaiError } =
-        await supabaseAdmin.rpc("match_file_items_openai", {
+      console.log("Attempting vector search:", {
+        fileIds: uniqueFileIds,
+        sourceCount,
+        embeddingsProvider,
+        hasEmbedding: Boolean(openaiEmbedding)
+      })
+
+      console.log("Pre-search check:", {
+        fileIds: uniqueFileIds,
+        embeddingLength: openaiEmbedding?.length
+      })
+
+      const { data: fileItemsCheck, error: checkError } = await supabaseAdmin
+        .from("file_items")
+        .select("id, file_id")
+        .in("file_id", uniqueFileIds)
+        .limit(1)
+
+      console.log("File items check:", {
+        hasItems: fileItemsCheck && fileItemsCheck.length > 0,
+        firstItem: fileItemsCheck?.[0],
+        error: checkError?.message
+      })
+
+      const { data: items, error: searchError } = await supabaseAdmin.rpc(
+        "match_file_items_openai",
+        {
           query_embedding: openaiEmbedding as any,
           match_count: sourceCount,
           file_ids: uniqueFileIds
-        })
+        }
+      )
 
-      if (openaiError) {
-        throw openaiError
+      console.log("Search results:", {
+        error: searchError?.message,
+        itemCount: items?.length,
+        firstItem: items?.[0]
+          ? {
+              fileId: items[0].file_id,
+              similarity: items[0].similarity,
+              contentPreview: items[0].content.substring(0, 100)
+            }
+          : null
+      })
+
+      if (searchError) {
+        throw searchError
       }
 
-      chunks = openaiFileItems
+      chunks = items
+
+      console.log("Vector search results:", {
+        matchCount: chunks?.length,
+        fileIds: uniqueFileIds,
+        matches: chunks?.map(chunk => ({
+          fileId: chunk.file_id,
+          similarity: chunk.similarity,
+          content: chunk.content.substring(0, 100) + "..."
+        }))
+      })
     } else if (embeddingsProvider === "local") {
       const localEmbedding = await generateLocalEmbedding(userInput)
 

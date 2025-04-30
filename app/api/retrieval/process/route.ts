@@ -12,6 +12,7 @@ import { FileItemChunk } from "@/types"
 import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 import OpenAI from "openai"
+import { preprocessFileContent } from "@/lib/text-processing"
 
 export async function POST(req: Request) {
   try {

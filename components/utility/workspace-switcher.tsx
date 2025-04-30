@@ -39,10 +39,26 @@ export const WorkspaceSwitcher: FC<WorkspaceSwitcherProps> = ({}) => {
   const [search, setSearch] = useState("")
 
   useEffect(() => {
-    if (!selectedWorkspace) return
+    if (!selectedWorkspace) {
+      setValue("")
+      return
+    }
 
+    console.log("Setting workspace value:", {
+      id: selectedWorkspace.id,
+      name: selectedWorkspace.name
+    })
     setValue(selectedWorkspace.id)
   }, [selectedWorkspace])
+
+  useEffect(() => {
+    console.log("WorkspaceSwitcher state:", {
+      selectedWorkspace,
+      workspaces,
+      value,
+      workspaceImages
+    })
+  }, [selectedWorkspace, workspaces, value, workspaceImages])
 
   const handleCreateWorkspace = async () => {
     if (!selectedWorkspace) return
@@ -71,11 +87,21 @@ export const WorkspaceSwitcher: FC<WorkspaceSwitcherProps> = ({}) => {
   }
 
   const getWorkspaceName = (workspaceId: string) => {
+    console.log("Getting workspace name:", {
+      workspaceId,
+      selectedWorkspaceId: selectedWorkspace?.id,
+      selectedWorkspaceName: selectedWorkspace?.name,
+      availableWorkspaces: workspaces.map(w => ({ id: w.id, name: w.name }))
+    })
+
+    if (!workspaceId && selectedWorkspace) {
+      return selectedWorkspace.name
+    }
+
+    if (!workspaceId) return "Select workspace..."
+
     const workspace = workspaces.find(workspace => workspace.id === workspaceId)
-
-    if (!workspace) return
-
-    return workspace.name
+    return workspace?.name || selectedWorkspace?.name || "Select workspace..."
   }
 
   const handleSelect = (workspaceId: string) => {

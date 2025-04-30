@@ -53,6 +53,10 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     contentType: ContentType,
     item: DataItemType
   ) => {
+    if (contentType === "files") {
+      return <FileItem key={item.id} file={item as Tables<"files">} />
+    }
+
     switch (contentType) {
       case "chats":
         return <ChatItem key={item.id} chat={item as Tables<"chats">} />
@@ -62,9 +66,6 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
 
       case "prompts":
         return <PromptItem key={item.id} prompt={item as Tables<"prompts">} />
-
-      case "files":
-        return <FileItem key={item.id} file={item as Tables<"files">} />
 
       case "collections":
         return (
@@ -214,8 +215,8 @@ export const SidebarDataList: FC<SidebarDataListProps> = ({
     }
   }, [data])
 
-  const dataWithFolders = data.filter(item => item.folder_id)
-  const dataWithoutFolders = data.filter(item => item.folder_id === null)
+  const dataWithFolders = data.filter(item => Boolean(item.folder_id))
+  const dataWithoutFolders = data.filter(item => !item.folder_id)
 
   return (
     <>

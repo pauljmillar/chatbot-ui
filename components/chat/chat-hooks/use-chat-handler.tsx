@@ -167,7 +167,7 @@ export const useChatHandler = () => {
 
       if ((workspaceWithFiles?.files ?? []).length > 0) {
         setChatFiles(
-          workspaceWithFiles.files.map((file: Tables<"files">) => ({
+          workspaceWithFiles.files.map(file => ({
             id: file.id,
             name: file.name,
             type: file.type,

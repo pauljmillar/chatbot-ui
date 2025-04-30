@@ -180,7 +180,14 @@ function buildRetrievalText(fileItems: Tables<"file_items">[]) {
     .map(item => `<BEGIN SOURCE>\n${item.content}\n</END SOURCE>`)
     .join("\n\n")
 
-  return `You may use the following sources if needed to answer the user's question. If you don't know the answer, say "I don't know."\n\n${retrievalText}`
+  return `You may use the following sources to answer the user's question. Please follow these guidelines:
+1. Consider ALL provided sources, even if they seem only partially relevant
+2. If a source contains ANY keywords from the question, include it in your answer
+3. Quote the relevant parts of the sources you use
+4. Be explicit about which source you're using for each part of your answer
+5. Only say "I didn't find this information in the provided documents" if NONE of the sources contain ANY relevant keywords
+
+Here are the sources:\n\n${retrievalText}`
 }
 
 function adaptSingleMessageForGoogleGemini(message: any) {

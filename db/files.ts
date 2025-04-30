@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase/browser-client"
 import { TablesInsert, TablesUpdate } from "@/supabase/types"
 import mammoth from "mammoth"
 import { toast } from "sonner"
-import { uploadFile } from "./storage/files"
+import { uploadFile, deleteStorageFile } from "./storage/files"
 
 export const getFileById = async (fileId: string) => {
   // First verify auth
@@ -30,34 +30,52 @@ export const getFileById = async (fileId: string) => {
 }
 
 export const getFileWorkspacesByWorkspaceId = async (workspaceId: string) => {
+  console.log("Starting getFileWorkspacesByWorkspaceId:", workspaceId)
+
   // First verify auth
   const {
     data: { user }
   } = await supabase.auth.getUser()
   if (!user) throw new Error("User not authenticated")
 
-  console.log("Fetching files for workspace:", workspaceId)
-
-  const { data: workspace, error } = await supabase
-    .from("workspaces")
+  // Query through file_workspaces with detailed logging
+  const { data: files, error } = await supabase
+    .from("file_workspaces")
     .select(
       `
-      id,
-      name,
-      files!file_workspaces(*)
+      file_id,
+      workspace_id,
+      files!inner (
+        id,
+        name,
+        type,
+        sharing,
+        size,
+        tokens,
+        created_at,
+        updated_at,
+        user_id,
+        file_path
+      )
     `
     )
-    .eq("id", workspaceId)
-    .single()
+    .eq("workspace_id", workspaceId)
 
-  console.log("Files query result:", { workspace, error })
+  console.log("Raw file query result:", { files, error })
 
   if (error) {
     console.error("Error fetching workspace files:", error)
     throw new Error(error.message)
   }
 
-  return workspace
+  // Transform and log the result
+  const transformedFiles = files.map(f => f.files)
+  console.log("Transformed files:", transformedFiles)
+
+  return {
+    id: workspaceId,
+    files: transformedFiles
+  }
 }
 
 export const getFileWorkspacesByFileId = async (fileId: string) => {
@@ -113,6 +131,50 @@ export const createFile = async (
   workspace_id: string,
   embeddingsProvider: "openai" | "local"
 ) => {
+  console.log("Starting file creation process:", {
+    fileName: file.name,
+    fileRecord,
+    workspace_id
+  })
+
+  // First verify auth
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("User not authenticated")
+  console.log("Authenticated user:", user.id)
+
+  // Verify workspace access - fixed query
+  console.log("Checking workspace access for:", workspace_id)
+  const { data: workspaceAccess, error: accessError } = await supabase
+    .from("account_workspaces")
+    .select(
+      `
+      workspace_id,
+      account_id,
+      accounts!inner (
+        account_members!inner (
+          user_id
+        )
+      )
+    `
+    )
+    .eq("workspace_id", workspace_id)
+    .eq("accounts.account_members.user_id", user.id)
+    .single()
+
+  console.log("Workspace access check result:", {
+    workspaceAccess,
+    accessError
+  })
+
+  if (accessError || !workspaceAccess) {
+    console.error("Workspace access error:", accessError)
+    throw new Error("No access to this workspace")
+  }
+
+  // Log filename processing
+  console.log("Processing filename:", fileRecord.name)
   let validFilename = fileRecord.name.replace(/[^a-z0-9.]/gi, "_").toLowerCase()
   const extension = file.name.split(".").pop()
   const extensionIndex = validFilename.lastIndexOf(".")
@@ -126,32 +188,63 @@ export const createFile = async (
   } else {
     fileRecord.name = baseName + "." + extension
   }
-  const { data: createdFile, error } = await supabase
+  console.log("Processed filename:", fileRecord.name)
+
+  // Create file record with logging
+  console.log("Creating file record:", { ...fileRecord, user_id: user.id })
+  const { data: createdFile, error: fileError } = await supabase
     .from("files")
-    .insert([fileRecord])
+    .insert([{ ...fileRecord, user_id: user.id }])
     .select("*")
     .single()
 
-  if (error) {
-    throw new Error(error.message)
+  console.log("File record creation result:", { createdFile, fileError })
+
+  if (fileError) {
+    console.error("Error creating file record:", fileError)
+    throw new Error(fileError.message)
   }
 
-  await createFileWorkspace({
-    user_id: createdFile.user_id,
+  // Create file workspace association with logging
+  console.log("Creating file workspace association:", {
     file_id: createdFile.id,
-    workspace_id
+    workspace_id,
+    user_id: user.id
   })
+  const { error: workspaceError } = await supabase
+    .from("file_workspaces")
+    .insert({
+      file_id: createdFile.id,
+      workspace_id: workspace_id,
+      user_id: user.id
+    })
 
+  console.log("File workspace association result:", { workspaceError })
+
+  if (workspaceError) {
+    console.error("Error creating file workspace association:", workspaceError)
+    await deleteFile(createdFile.id)
+    throw new Error(workspaceError.message)
+  }
+
+  // Upload file to storage with logging
+  console.log("Uploading file to storage")
   const filePath = await uploadFile(file, {
     name: createdFile.name,
-    user_id: createdFile.user_id,
-    file_id: createdFile.name
+    user_id: user.id,
+    file_id: createdFile.name,
+    workspace_id: workspace_id
   })
+  console.log("File upload complete, path:", filePath)
 
+  // Update file with path
+  console.log("Updating file record with path")
   await updateFile(createdFile.id, {
     file_path: filePath
   })
 
+  // Process file
+  console.log("Starting file processing")
   const formData = new FormData()
   formData.append("file_id", createdFile.id)
   formData.append("embeddingsProvider", embeddingsProvider)
@@ -160,6 +253,8 @@ export const createFile = async (
     method: "POST",
     body: formData
   })
+
+  console.log("File processing response:", response.status)
 
   if (!response.ok) {
     const jsonText = await response.text()
@@ -174,7 +269,7 @@ export const createFile = async (
   }
 
   const fetchedFile = await getFileById(createdFile.id)
-
+  console.log("Final fetched file:", fetchedFile)
   return fetchedFile
 }
 
@@ -186,26 +281,62 @@ export const createDocXFile = async (
   workspace_id: string,
   embeddingsProvider: "openai" | "local"
 ) => {
-  const { data: createdFile, error } = await supabase
+  // First verify auth
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("User not authenticated")
+
+  // Verify workspace access
+  const { data: hasAccess } = await supabase
+    .from("account_workspaces")
+    .select(
+      `
+      account_id,
+      account_members!inner(*)
+    `
+    )
+    .eq("workspace_id", workspace_id)
+    .eq("account_members.user_id", user.id)
+    .single()
+
+  if (!hasAccess) {
+    throw new Error("No access to this workspace")
+  }
+
+  // Create file record
+  const { data: createdFile, error: fileError } = await supabase
     .from("files")
     .insert([fileRecord])
     .select("*")
     .single()
 
-  if (error) {
-    throw new Error(error.message)
+  if (fileError) {
+    console.error("Error creating file record:", fileError)
+    throw new Error(fileError.message)
   }
 
-  await createFileWorkspace({
-    user_id: createdFile.user_id,
-    file_id: createdFile.id,
-    workspace_id
-  })
+  // Create file workspace association
+  const { error: workspaceError } = await supabase
+    .from("file_workspaces")
+    .insert({
+      file_id: createdFile.id,
+      workspace_id: workspace_id,
+      user_id: user.id
+    })
 
+  if (workspaceError) {
+    console.error("Error creating file workspace association:", workspaceError)
+    await deleteFile(createdFile.id)
+    throw new Error(workspaceError.message)
+  }
+
+  // Upload file to storage
   const filePath = await uploadFile(file, {
     name: createdFile.name,
-    user_id: createdFile.user_id,
-    file_id: createdFile.name
+    user_id: user.id,
+    file_id: createdFile.name,
+    workspace_id: workspace_id
   })
 
   await updateFile(createdFile.id, {
@@ -238,7 +369,6 @@ export const createDocXFile = async (
   }
 
   const fetchedFile = await getFileById(createdFile.id)
-
   return fetchedFile
 }
 
@@ -246,6 +376,24 @@ export const createFiles = async (
   files: TablesInsert<"files">[],
   workspace_id: string
 ) => {
+  // First verify auth
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("User not authenticated")
+
+  // Verify workspace access
+  const { data: hasAccess } = await supabase
+    .from("account_workspaces")
+    .select("account_id")
+    .eq("workspace_id", workspace_id)
+    .eq("account_members.user_id", user.id)
+    .single()
+
+  if (!hasAccess) {
+    throw new Error("No access to this workspace")
+  }
+
   const { data: createdFiles, error } = await supabase
     .from("files")
     .insert(files)
@@ -255,13 +403,14 @@ export const createFiles = async (
     throw new Error(error.message)
   }
 
-  await createFileWorkspaces(
-    createdFiles.map(file => ({
-      user_id: file.user_id,
-      file_id: file.id,
-      workspace_id
-    }))
-  )
+  // Create file workspace associations
+  const fileWorkspaces = createdFiles.map(file => ({
+    user_id: user.id,
+    file_id: file.id,
+    workspace_id
+  }))
+
+  await createFileWorkspaces(fileWorkspaces)
 
   return createdFiles
 }
@@ -316,6 +465,24 @@ export const updateFile = async (
 }
 
 export const deleteFile = async (fileId: string) => {
+  // First verify auth
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("User not authenticated")
+
+  // Get file info for storage deletion
+  const { data: file } = await supabase
+    .from("files")
+    .select("file_path")
+    .eq("id", fileId)
+    .single()
+
+  // Delete from storage if file path exists
+  if (file?.file_path) {
+    await deleteStorageFile(file.file_path)
+  }
+
   const { error } = await supabase.from("files").delete().eq("id", fileId)
 
   if (error) {
@@ -329,6 +496,29 @@ export const deleteFileWorkspace = async (
   fileId: string,
   workspaceId: string
 ) => {
+  // First verify auth
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error("User not authenticated")
+
+  // Verify workspace access
+  const { data: hasAccess } = await supabase
+    .from("account_workspaces")
+    .select(
+      `
+      account_id,
+      account_members!inner(*)
+    `
+    )
+    .eq("workspace_id", workspaceId)
+    .eq("account_members.user_id", user.id)
+    .single()
+
+  if (!hasAccess) {
+    throw new Error("No access to this workspace")
+  }
+
   const { error } = await supabase
     .from("file_workspaces")
     .delete()
@@ -338,4 +528,89 @@ export const deleteFileWorkspace = async (
   if (error) throw new Error(error.message)
 
   return true
+}
+
+// Function to migrate file paths
+export const migrateFilePath = async (fileId: string, workspaceId: string) => {
+  // Get the file details
+  const { data: file, error: fileError } = await supabase
+    .from("files")
+    .select("*")
+    .eq("id", fileId)
+    .single()
+
+  if (fileError) {
+    console.error("Error getting file:", fileError)
+    throw new Error(fileError.message)
+  }
+
+  // Get the file data from storage
+  const { data: fileData, error: downloadError } = await supabase.storage
+    .from("files")
+    .download(file.file_path)
+
+  if (downloadError) {
+    console.error("Error downloading file:", downloadError)
+    throw new Error(downloadError.message)
+  }
+
+  // Create new path with workspace_id
+  const newPath = `${workspaceId}/${file.name}`
+
+  // Upload to new path
+  const { error: uploadError } = await supabase.storage
+    .from("files")
+    .upload(newPath, fileData)
+
+  if (uploadError) {
+    console.error("Error uploading to new path:", uploadError)
+    throw new Error(uploadError.message)
+  }
+
+  // Update file record with new path
+  const { error: updateError } = await supabase
+    .from("files")
+    .update({ file_path: newPath })
+    .eq("id", fileId)
+
+  if (updateError) {
+    console.error("Error updating file path:", updateError)
+    throw new Error(updateError.message)
+  }
+
+  // Delete old file
+  const { error: deleteError } = await supabase.storage
+    .from("files")
+    .remove([file.file_path])
+
+  if (deleteError) {
+    console.error("Error deleting old file:", deleteError)
+    // Don't throw here, old file can be cleaned up later
+  }
+
+  return newPath
+}
+
+// Function to migrate all files in a workspace
+export const migrateWorkspaceFiles = async (workspaceId: string) => {
+  const { data: files, error } = await supabase
+    .from("file_workspaces")
+    .select("file_id")
+    .eq("workspace_id", workspaceId)
+
+  if (error) {
+    console.error("Error getting workspace files:", error)
+    throw new Error(error.message)
+  }
+
+  console.log(`Migrating ${files.length} files for workspace ${workspaceId}`)
+
+  for (const file of files) {
+    try {
+      await migrateFilePath(file.file_id, workspaceId)
+      console.log(`Migrated file ${file.file_id}`)
+    } catch (e) {
+      console.error(`Failed to migrate file ${file.file_id}:`, e)
+    }
+  }
 }

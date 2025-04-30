@@ -111,11 +111,21 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     console.log("Found workspace:", workspace)
 
     if (!workspace) {
-      console.error("Workspace access error:", {
+      console.log("Workspace not found, redirecting to available workspace:", {
         requestedId: params.workspaceid,
         availableWorkspaces: workspaces.map(w => ({ id: w.id, name: w.name }))
       })
-      throw new Error("Workspace not found or access denied")
+
+      // If there are available workspaces, redirect to the first one
+      if (workspaces.length > 0) {
+        const redirectWorkspace = workspaces[0]
+        setSelectedWorkspace(redirectWorkspace)
+        router.push(`/${params.locale}/${redirectWorkspace.id}/chat`)
+        return
+      }
+
+      // Only throw if there are no available workspaces
+      throw new Error("No accessible workspaces found")
     }
 
     setSelectedWorkspace(workspace)
@@ -174,7 +184,7 @@ export default function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
     }
 
     const fileData = await getFileWorkspacesByWorkspaceId(workspaceId)
-    setFiles(fileData.files)
+    setFiles(fileData.files as any)
 
     const presetData = await getPresetWorkspacesByWorkspaceId(workspaceId)
     setPresets(presetData.presets)
