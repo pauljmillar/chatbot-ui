@@ -18,31 +18,69 @@ export default function ChatPage() {
     handleFocusChatInput()
   })
 
-  const { chatMessages } = useContext(ChatbotUIContext)
+  const { chatMessages, profile, setUserInput } = useContext(ChatbotUIContext)
+  const isUserAdmin = profile?.system_role === "admin" || false
 
   const { handleNewChat, handleFocusChatInput } = useChatHandler()
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setUserInput(suggestion)
+    handleFocusChatInput()
+  }
 
   const { theme } = useTheme()
 
   return (
-    <>
+    <div className="h-screen">
       {chatMessages.length === 0 ? (
         <div className="relative flex h-full flex-col items-center justify-center">
-          <div className="top-50% left-50% -translate-x-50% -translate-y-50% absolute mb-20">
-            <Brand theme={theme === "dark" ? "dark" : "light"} />
-          </div>
-
           <div className="absolute left-2 top-2">
             <QuickSettings />
           </div>
 
-          <div className="absolute right-2 top-2">
-            <ChatSettings />
-          </div>
+          {isUserAdmin && (
+            <div className="absolute right-2 top-2">
+              <ChatSettings />
+            </div>
+          )}
 
           <div className="flex grow flex-col items-center justify-center" />
 
-          <div className="w-full min-w-[300px] items-end px-2 pb-3 pt-0 sm:w-[600px] sm:pb-8 sm:pt-5 md:w-[700px] lg:w-[700px] xl:w-[800px]">
+          <div className="absolute bottom-0 w-full min-w-[300px] items-end px-2 pb-3 pt-0 sm:w-[600px] sm:pb-8 sm:pt-5 md:w-[700px] lg:w-[700px] xl:w-[800px]">
+            <div className="mb-4 grid grid-cols-2 gap-3">
+              <button
+                onClick={() =>
+                  handleSuggestionClick(
+                    "What are 5 recent themes Trump has recently tweeted about?"
+                  )
+                }
+                className="rounded-xl border p-4 text-left hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+              >
+                What are 5 themes of Trump has recently tweeted about?
+              </button>
+              <button
+                onClick={() =>
+                  handleSuggestionClick(
+                    "What are 5 recent themes of Trump's tweets?"
+                  )
+                }
+                className="rounded-xl border p-4 text-left hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+              >
+                Suggestion 2
+              </button>
+              <button
+                onClick={() => handleSuggestionClick("Suggestion 3")}
+                className="rounded-xl border p-4 text-left hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+              >
+                Suggestion 3
+              </button>
+              <button
+                onClick={() => handleSuggestionClick("Suggestion 4")}
+                className="rounded-xl border p-4 text-left hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+              >
+                Suggestion 4
+              </button>
+            </div>
             <ChatInput />
           </div>
 
@@ -53,6 +91,6 @@ export default function ChatPage() {
       ) : (
         <ChatUI />
       )}
-    </>
+    </div>
   )
 }
